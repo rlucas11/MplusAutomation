@@ -27,7 +27,7 @@
 #' @examples
 #' # interactive, none
 runModels_Interactive <- function(directory=getwd(), recursive="0",
-    showOutput="1", replaceOutfile="1", checkDate="0", logFile="1")
+    showOutput="1", replaceOutfile="1", checkDate="0", logFile="1", Mplus_command="Mplus")
 {
   if (!suppressWarnings(require(tcltk))) {
     stop("The tcltk package is absent. Interactive folder selection cannot function.")
@@ -64,7 +64,8 @@ runModels_Interactive <- function(directory=getwd(), recursive="0",
     tkdestroy(top)
 
     runModels(directory=directory, recursive=recursiveChecked,
-        showOutput=showOutputChecked, replaceOutfile=replaceOutfileStr, logFile=logFile_TCL)
+        showOutput=showOutputChecked, replaceOutfile=replaceOutfileStr, logFile=logFile_TCL,
+        Mplus_command=Mplus_command)
   }
   onCancel <- function(){
     #tkgrab.release(top)
@@ -438,8 +439,15 @@ runModels <- function(directory=getwd(), recursive=FALSE, filefilter = NULL, sho
       else stdout.value = NULL
       #need to switch to each directory, then run Mplus within using just the filename
       oldwd <- getwd()
-      setwd(inputSplit$directory)
-      exitCode <- system2(Mplus_command, args=c(shQuote(inputSplit$filename)), stdout=stdout.value, wait=TRUE)
+      setwd(dirtocd)
+      if (Mplus_command=="wine mplus") {
+          s2command <- "wine"
+          s2args <- paste("mplus",inputSplit$filename,sep=" ")
+      } else {
+          s2command <- Mplus_command
+          s2args <- c(shQuote(inputSplit$filename))
+      }
+      exitCode <- system2(s2command, args=s2args, stdout=stdout.value, wait=TRUE)
       if (exitCode > 0L) {
         warning("Mplus returned error code: ", exitCode, ", for model: ", inputSplit$filename, "\n")
       }
